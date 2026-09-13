@@ -1,6 +1,6 @@
 # Verification record
 
-Verified on **2026-09-13 (Asia/Kolkata)**. The initial sections describe local evidence; hosted observations are recorded separately below and do not claim a passing hosted acceptance run.
+Verified on **2026-09-13 (Asia/Kolkata)**. The initial sections describe local evidence. Hosted observations below preserve the failed attempts and the subsequent strict correctness pass; measured latency is not a low-latency SLA pass.
 
 ## Environment
 
@@ -66,9 +66,17 @@ Follow the README test, Compose and two-instance commands. Unit/Failsafe reports
 - Code remediation combines the two immutable-wallet identity lookups into one SELECT and obtains the finalized transfer with UPDATE RETURNING, including database-generated timestamps, removing two SQL round trips from a successful new transfer. Ownership is still checked before the key claim, wallet rows are still locked in UUID order with NO KEY UPDATE, and the guarded debit, separate credit and single transaction are unchanged. Retryable logs now include only a safe exception type, never exception messages containing credentials.
 - Post-change `./mvnw verify` passed all 19 Java unit/integration cases, including concurrent full-response equality and credit rollback; seven Python retry-runner unit tests passed. Hosted performance of this code change remains unverified until deployment and retest.
 
+## Optimized Ohio hosted correctness pass — 2026-09-13
+
+- Commit `2ac27cb` passed [GitHub CI](https://github.com/sandhya89767/wallet-transfer-service/actions/runs/34768207474) and deployed successfully to https://wallet-service-ohio.onrender.com. Effective pool size: 20; Render Free Ohio, unchanged 0.1 CPU / 512 MiB plan.
+- Strict run `2d921c58-cb03-4ea7-b702-1e977d3bdbda` **PASSED all 541 logical requests / 541 HTTP attempts with zero automatic retries**. Counts: 54×201, 483×200, 1×409, 1×401, 2×400; no 5xx. Wallet race and full replay equality passed; contention produced 400 successes and 40 insufficient-funds declines; balances remained 100,000 paise each with total 200,000 conserved; declined replay and validation passed.
+- Client attempt p99: **10,198.85 ms**; logical-operation p99: **10,198.92 ms**. This proves the assertions for this run, not a low-latency target or guaranteed capacity. Any assignment latency target must be assessed separately and this number disclosed.
+- Post-test readiness/liveness returned 200 UP; metrics returned 200, pool timeouts=0, pending=0, recorded transfers=441, declines=40, idempotent replays=30. No post-test restart was observed in this check.
+- Hosted post-redeploy same-key persistence test, accessible recording and fresh privately shared reviewer tokens remain outstanding.
+
 ## Limitations
 
 - The [public GitHub repository](https://github.com/sandhya89767/wallet-transfer-service) is published. [Hosted CI passed](https://github.com/sandhya89767/wallet-transfer-service/actions/runs/34763347884) for implementation commit `a300e0e`.
-- The public endpoint exists, but passing hosted acceptance, post-redeploy persistence verification and public logs/recording remain **pending**. Confirm service recovery before review.
+- One optimized Ohio strict correctness run passed as recorded above; hosted post-redeploy persistence verification and public logs/recording remain **pending**. Free-host latency/cold starts and the earlier failures must not be concealed.
 - No R3 reversal endpoint; no real funding/payment provider, managed identity, durable telemetry outbox, or production financial certification is claimed.
 - Extreme overload can produce bounded-timeout 503 responses; clients must retry with the same key.
