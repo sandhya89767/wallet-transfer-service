@@ -72,11 +72,19 @@ Follow the README test, Compose and two-instance commands. Unit/Failsafe reports
 - Strict run `2d921c58-cb03-4ea7-b702-1e977d3bdbda` **PASSED all 541 logical requests / 541 HTTP attempts with zero automatic retries**. Counts: 54×201, 483×200, 1×409, 1×401, 2×400; no 5xx. Wallet race and full replay equality passed; contention produced 400 successes and 40 insufficient-funds declines; balances remained 100,000 paise each with total 200,000 conserved; declined replay and validation passed.
 - Client attempt p99: **10,198.85 ms**; logical-operation p99: **10,198.92 ms**. This proves the assertions for this run, not a low-latency target or guaranteed capacity. Any assignment latency target must be assessed separately and this number disclosed.
 - Post-test readiness/liveness returned 200 UP; metrics returned 200, pool timeouts=0, pending=0, recorded transfers=441, declines=40, idempotent replays=30. No post-test restart was observed in this check.
-- Hosted post-redeploy same-key persistence test, accessible recording and fresh privately shared reviewer tokens remain outstanding.
+- Hosted post-redeploy persistence is verified below. An accessible recording and delivery of fresh reviewer tokens remain outstanding.
+
+## Hosted redeploy persistence — 2026-09-13
+
+- Prepared a fresh 7,500-paise transfer and recorded balances **92,500 / 27,500 paise** with correlation `persistence-0567f858-f42d-4489-85a2-e0cb369abe91`.
+- Triggered an actual Render redeployment of commit `106d2b5` (deployment `dep-dajd2huk1f9s73d5s5m0`). After it became live, process-start metric changed from `1789316900.389` to `1789317460.429`.
+- At **2026-09-13 16:40:59 UTC**, authenticated GET returned the exact original transfer `25566b28-bce8-4c78-9376-7a086af74103`. Reposting the same request and idempotency key returned that identical persisted response. Both wallet balances before and after replay remained **92,500 / 27,500**: **PASS, no second debit**.
+- Reproducible operator utility: [submission_check.py](../scripts/submission_check.py). Hidden signing-key entry, separate reviewer/recording identities, owner-only private files, and Git exclusion; no signing key is saved. Four utility regression tests pass alongside seven retry tests.
+- Five fresh reviewer-role tokens were generated and validated using read-only authenticated 404 probes, leaving the wallets uncreated for review. Expiry: **2026-09-14 16:36:51 UTC / 22:06:51 IST**. They have not yet been delivered; no tokens are included in this record.
 
 ## Limitations
 
 - The [public GitHub repository](https://github.com/sandhya89767/wallet-transfer-service) is published. [Hosted CI passed](https://github.com/sandhya89767/wallet-transfer-service/actions/runs/34763347884) for implementation commit `a300e0e`.
-- One optimized Ohio strict correctness run passed as recorded above; hosted post-redeploy persistence verification and public logs/recording remain **pending**. Free-host latency/cold starts and the earlier failures must not be concealed.
+- One optimized Ohio strict correctness run and the hosted redeploy-persistence check passed as recorded above. Public logs/recording and private reviewer-token delivery remain **pending**. Free-host latency/cold starts and the earlier failures must not be concealed.
 - No R3 reversal endpoint; no real funding/payment provider, managed identity, durable telemetry outbox, or production financial certification is claimed.
 - Extreme overload can produce bounded-timeout 503 responses; clients must retry with the same key.

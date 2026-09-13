@@ -12,7 +12,7 @@ The selected assignment is Wallet & P2P Transfer (exercise-bank pages 7–9), no
 | Public deployed API URL | https://wallet-service-ohio.onrender.com — optimized deployment passed one strict 541-request correctness run; client p99 10.2 seconds, not a low-latency claim |
 | Public logs or accessible burst/logs recording | **Pending — capture from the deployed service** |
 | Passing hosted CI run | [Passed on optimized implementation commit 2ac27cb](https://github.com/sandhya89767/wallet-transfer-service/actions/runs/34768207474) |
-| Fresh reviewer bearer-token bundle | **Pending — issue for the deployed key and share privately** |
+| Fresh reviewer bearer-token bundle | Generated and validated; **private delivery pending**. Expires 2026-09-14 22:06:51 IST; regenerate if expired. |
 
 Do not substitute localhost, fabricated URLs, a private dashboard link, or the local test report for these requirements.
 
@@ -33,7 +33,7 @@ Do not substitute localhost, fabricated URLs, a private dashboard link, or the l
 - [x] Publish under your own account with genuine provenance; do not fabricate a human development history.
 - [x] Verify CI and public readiness after deployment of `2ac27cb`.
 - [x] Run all HTTP bursts against the **public** URL; preserve the result and correlation ID in the verification record (one strict pass; p99 10.2 seconds).
-- [ ] Verify post-redeploy same-key retry and persisted balances.
+- [x] Verify post-redeploy same-key retry and persisted balances (2026-09-13, actual redeployment, identical response, no second debit).
 - [ ] Show live JSON logs, insufficient-funds/replay events, and metrics in an accessible recording/link.
 - [ ] Supply a fresh token bundle and document expiry and the cold-start behavior.
 - [ ] Confirm the chosen app/database plans are actually free and note any expiry/quota limits.

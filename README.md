@@ -122,7 +122,7 @@ wallet_transfers_idempotent_replays_total
 
 ## Deployment
 
-Use the [Render Blueprint](render.yaml) and [deployment runbook](docs/DEPLOYMENT.md) for a free Render container plus external managed PostgreSQL. The replacement public deployment is https://wallet-service-ohio.onrender.com (Free Ohio, pool 20). Optimized commit `2ac27cb` passed one strict 541-request hosted correctness run without retries and remained healthy; client p99 was **10.2 seconds**, not a low-latency SLA pass. Earlier failed runs are retained in [the verification record](docs/VERIFICATION.md). Hosted redeploy-persistence evidence and the recording remain pending. Configure:
+Use the [Render Blueprint](render.yaml) and [deployment runbook](docs/DEPLOYMENT.md) for a free Render container plus external managed PostgreSQL. The replacement public deployment is https://wallet-service-ohio.onrender.com (Free Ohio, pool 20). Optimized commit `2ac27cb` passed one strict 541-request hosted correctness run without retries and remained healthy; client p99 was **10.2 seconds**, not a low-latency SLA pass. Earlier failed runs and the successful real redeploy-persistence check are retained in [the verification record](docs/VERIFICATION.md). The public recording and private reviewer-token delivery remain pending. Configure:
 
 | Variable | Value |
 |---|---|
@@ -136,6 +136,6 @@ Use the [Render Blueprint](render.yaml) and [deployment runbook](docs/DEPLOYMENT
 
 `DATABASE_URL` must be a **JDBC URL**, with user/password supplied separately. Use a direct PostgreSQL endpoint for Flyway and connection session settings, not a transaction-pooling proxy. Use TLS for public database connections. Keep database/password values and token bundles out of source control.
 
-Use `/actuator/health/readiness` as the platform health-check path. The image health check honors `PORT`. The Render blueprint generates a private signing key. The [public repository](https://github.com/sandhya89767/wallet-transfer-service) is published and [hosted CI passed](https://github.com/sandhya89767/wallet-transfer-service/actions/runs/34768207474) for optimized implementation commit `2ac27cb`. Hosted redeploy-persistence evidence and the logs/recording link remain pending; see the submission checklist. R3 reversal is deliberately left for the requested live follow-up, not represented as an implemented R2 feature.
+Use `/actuator/health/readiness` as the platform health-check path. The image health check honors `PORT`. The Render blueprint generates a private signing key. The [public repository](https://github.com/sandhya89767/wallet-transfer-service) is published and [hosted CI passed](https://github.com/sandhya89767/wallet-transfer-service/actions/runs/34768207474) for optimized implementation commit `2ac27cb`. The public recording and private reviewer-token delivery remain pending; see the submission checklist. R3 reversal is deliberately left for the requested live follow-up, not represented as an implemented R2 feature.
 
 See [docs/DESIGN.md](docs/DESIGN.md) for the one-page design and trade-off discussion.
