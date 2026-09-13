@@ -130,6 +130,6 @@ Use the [Render Blueprint](render.yaml) and [deployment runbook](docs/DEPLOYMENT
 
 `DATABASE_URL` must be a **JDBC URL**, with user/password supplied separately. Use a direct PostgreSQL endpoint for Flyway and connection session settings, not a transaction-pooling proxy. Use TLS for public database connections. Keep database/password values and token bundles out of source control.
 
-Use `/actuator/health/readiness` as the platform health-check path. The image health check honors `PORT`. The Render blueprint generates a private signing key. The public repository, deployed URL, and logs/recording link remain owner-account tasks; see the submission checklist. R3 reversal is deliberately left for the requested live follow-up, not represented as an implemented R2 feature.
+Use `/actuator/health/readiness` as the platform health-check path. The image health check honors `PORT`. The Render blueprint generates a private signing key. The [public repository](https://github.com/sandhya89767/wallet-transfer-service) is published and [hosted CI passed](https://github.com/sandhya89767/wallet-transfer-service/actions/runs/34763347884) for implementation commit `a300e0e`. The deployed URL and logs/recording link remain owner-account tasks; see the submission checklist. R3 reversal is deliberately left for the requested live follow-up, not represented as an implemented R2 feature.
 
 See [docs/DESIGN.md](docs/DESIGN.md) for the one-page design and trade-off discussion.

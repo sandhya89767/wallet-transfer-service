@@ -50,6 +50,7 @@ Follow the README test, Compose and two-instance commands. Unit/Failsafe reports
 
 ## Limitations
 
-- Public GitHub/Render/managed database provisioning, hosted CI, public logs/recording and deployed probes remain **pending**.
+- The [public GitHub repository](https://github.com/sandhya89767/wallet-transfer-service) is published. [Hosted CI passed](https://github.com/sandhya89767/wallet-transfer-service/actions/runs/34763347884) for implementation commit `a300e0e`.
+- Render/managed database provisioning, public logs/recording and deployed probes remain **pending**.
 - No R3 reversal endpoint; no real funding/payment provider, managed identity, durable telemetry outbox, or production financial certification is claimed.
 - Extreme overload can produce bounded-timeout 503 responses; clients must retry with the same key.

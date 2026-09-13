@@ -8,10 +8,10 @@ The selected assignment is Wallet & P2P Transfer (exercise-bank pages 7–9), no
 
 | Deliverable | Status |
 |---|---|
-| Public GitHub repository | **Pending — publish through your account** |
+| Public GitHub repository | [sandhya89767/wallet-transfer-service](https://github.com/sandhya89767/wallet-transfer-service) — public, published |
 | Public deployed API URL | **Pending — deploy the image with managed PostgreSQL** |
 | Public logs or accessible burst/logs recording | **Pending — capture from the deployed service** |
-| Passing hosted CI run | **Pending — workflow added, not yet run on GitHub** |
+| Passing hosted CI run | [Passed on implementation commit a300e0e](https://github.com/sandhya89767/wallet-transfer-service/actions/runs/34763347884) |
 | Fresh reviewer bearer-token bundle | **Pending — issue for the deployed key and share privately** |
 
 Do not substitute localhost, fabricated URLs, a private dashboard link, or the local test report for these requirements.
@@ -30,7 +30,7 @@ Do not substitute localhost, fabricated URLs, a private dashboard link, or the l
 
 - [ ] Review the code and explain NO KEY UPDATE versus UPDATE, foreign-key locks, and the idempotency transaction boundary without relying on this checklist.
 - [ ] Review the honest AI-directed versus AI-decided disclosure; add only decisions you actually made.
-- [ ] Publish under your own account with genuine provenance; do not fabricate a human development history.
+- [x] Publish under your own account with genuine provenance; do not fabricate a human development history.
 - [ ] Verify CI and public readiness after deployment.
 - [ ] Run all HTTP bursts against the **public** URL; preserve the output and correlation ID.
 - [ ] Verify post-redeploy same-key retry and persisted balances.
@@ -43,7 +43,7 @@ Do not substitute localhost, fabricated URLs, a private dashboard link, or the l
 Wallet & P2P Transfer — Spring Boot / PostgreSQL
 
 - API: **fill actual public URL**
-- Repository: **fill actual public repository URL**
+- Repository: https://github.com/sandhya89767/wallet-transfer-service
 - Logs/recording: **fill accessible evidence URL**
 - Run probes: follow README with the privately supplied token bundle.
 - Design: docs/DESIGN.md in the public repository.
