@@ -53,6 +53,18 @@ public class WalletRepository {
                 .optional();
     }
 
+    public List<Wallet> findTransferWallets(UUID firstId, UUID secondId) {
+        return jdbcClient.sql("""
+                        SELECT id, user_id, balance_paise, created_at
+                        FROM wallets
+                        WHERE id IN (:firstId, :secondId)
+                        """)
+                .param("firstId", firstId)
+                .param("secondId", secondId)
+                .query((resultSet, rowNumber) -> mapWallet(resultSet))
+                .list();
+    }
+
     public List<Wallet> lockForTransfer(UUID firstId, UUID secondId) {
         return jdbcClient.sql("""
                         SELECT id, user_id, balance_paise, created_at

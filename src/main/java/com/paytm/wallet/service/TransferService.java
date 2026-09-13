@@ -61,12 +61,13 @@ public class TransferService {
 
         // Ownership/existence checks do not lock rows. Wallet identities are immutable;
         // foreign keys remain the database backstop. Never claim a key for an unauthorized caller.
-        Wallet ownedSource = walletRepository.findById(from)
+        List<Wallet> identities = walletRepository.findTransferWallets(from, to);
+        Wallet ownedSource = identities.stream().filter(wallet -> wallet.id().equals(from)).findFirst()
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "wallet_not_found", "Source wallet not found"));
         if (!ownedSource.userId().equals(userId)) {
             throw new ApiException(HttpStatus.FORBIDDEN, "wallet_forbidden", "Source wallet belongs to another user");
         }
-        if (walletRepository.findById(to).isEmpty()) {
+        if (identities.size() != 2) {
             throw new ApiException(HttpStatus.NOT_FOUND, "wallet_not_found", "Destination wallet not found");
         }
 
@@ -91,7 +92,7 @@ public class TransferService {
 
         Wallet destination = lockedWallets.stream().filter(wallet -> wallet.id().equals(to)).findFirst().orElseThrow();
         if (source.balancePaise() >= amountPaise && destination.balancePaise() > Long.MAX_VALUE - amountPaise) {
-            transferRepository.markDeclined(transferId, "BALANCE_LIMIT_EXCEEDED");
+            Transfer finalized = transferRepository.markDeclined(transferId, "BALANCE_LIMIT_EXCEEDED");
             afterCommit(() -> {
                 createdCounter.increment();
                 meterRegistry.counter("wallet.transfers.declined", "reason", "balance_limit_exceeded").increment();
@@ -99,11 +100,11 @@ public class TransferService {
                         .addKeyValue("transfer_id", transferId).addKeyValue("reason", "BALANCE_LIMIT_EXCEEDED")
                         .log("Transfer declined");
             });
-            return transferRepository.findByIdempotencyKey(idempotencyKey).orElseThrow();
+            return finalized;
         }
 
         if (!walletRepository.debitIfSufficient(from, amountPaise)) {
-            transferRepository.markDeclined(transferId, INSUFFICIENT_FUNDS);
+            Transfer finalized = transferRepository.markDeclined(transferId, INSUFFICIENT_FUNDS);
             afterCommit(() -> {
                 createdCounter.increment();
                 declinedCounter.increment();
@@ -115,11 +116,11 @@ public class TransferService {
                         .addKeyValue("reason", INSUFFICIENT_FUNDS)
                         .log("Transfer declined");
             });
-            return transferRepository.findByIdempotencyKey(idempotencyKey).orElseThrow();
+            return finalized;
         }
 
         walletRepository.credit(to, amountPaise);
-        transferRepository.markSucceeded(transferId);
+        Transfer finalized = transferRepository.markSucceeded(transferId);
         afterCommit(() -> {
             createdCounter.increment();
             log.atInfo()
@@ -140,7 +141,7 @@ public class TransferService {
                     .addKeyValue("amount_paise", amountPaise)
                     .log("Wallet credited");
         });
-        return transferRepository.findByIdempotencyKey(idempotencyKey).orElseThrow();
+        return finalized;
     }
 
     public Transfer get(UUID id, String userId) {

@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """HTTP-only acceptance probes. No third-party Python packages or database access."""
 from concurrent.futures import ThreadPoolExecutor
+from collections import Counter
 import json
 import itertools
 import os
+import random
 import sys
 import threading
 import time
@@ -20,7 +22,12 @@ URLS = itertools.cycle(BASES)
 URL_LOCK = threading.Lock()
 RUN = str(uuid.uuid4())
 LATENCIES = []
+OPERATION_LATENCIES = []
+HTTP_STATUSES = Counter()
 LATENCY_LOCK = threading.Lock()
+MAX_RETRIES = int(os.environ.get("BURST_MAX_RETRIES", "0"))
+if not 0 <= MAX_RETRIES <= 3:
+    sys.exit("BURST_MAX_RETRIES must be between 0 (strict default) and 3")
 fixture_path = os.environ.get("BURST_TOKENS_FILE")
 if fixture_path:
     with open(fixture_path, encoding="utf-8") as stream:
@@ -44,23 +51,43 @@ def request(method, path, role=None, body=None, expected=200):
     if body is not None:
         headers["Content-Type"] = "application/json"
         data = json.dumps(body).encode()
-    started = time.monotonic()
+    operation_started = time.monotonic()
     with URL_LOCK:
         base = next(URLS)
+    # Reuse the exact URL, token, bytes and idempotency key for each attempt.
     req = urllib.request.Request(base + path, data=data, headers=headers, method=method)
     try:
-        response = urllib.request.urlopen(req, timeout=30)
-    except urllib.error.HTTPError as error:
-        response = error
-    with response:
-        status = response.code
-        raw = response.read().decode()
-        correlation = response.headers.get("X-Correlation-Id")
-    with LATENCY_LOCK:
-        LATENCIES.append(time.monotonic() - started)
-    assert status == expected, f"{method} {path}: expected {expected}, got {status}: {raw[:400]}"
-    assert correlation == f"burst-{RUN}", "Correlation ID was not propagated"
-    return json.loads(raw)
+        for attempt in range(MAX_RETRIES + 1):
+            started = time.monotonic()
+            try:
+                response = urllib.request.urlopen(req, timeout=30)
+            except urllib.error.HTTPError as error:
+                response = error
+            with response:
+                status = response.code
+                raw = response.read().decode()
+                correlation = response.headers.get("X-Correlation-Id")
+                retry_after = response.headers.get("Retry-After", "1")
+            with LATENCY_LOCK:
+                LATENCIES.append(time.monotonic() - started)
+                HTTP_STATUSES[status] += 1
+            assert correlation == f"burst-{RUN}", "Correlation ID was not propagated"
+            result = json.loads(raw)
+            if (status == 503 and expected != 503 and isinstance(result, dict)
+                    and result.get("code") == "temporarily_unavailable" and attempt < MAX_RETRIES):
+                # The API emits delta-seconds. Refuse unexpected/long values rather
+                # than ignoring Retry-After or waiting indefinitely.
+                assert retry_after.isdigit() and 0 <= int(retry_after) <= 30, "Invalid Retry-After"
+                delay = max(int(retry_after), 2 ** attempt) + random.uniform(0, 0.5)
+                print(f"RETRY {method} {path}: HTTP 503, retry {attempt + 1}/{MAX_RETRIES}, "
+                      f"delay={delay:.2f}s, correlation=burst-{RUN}", flush=True)
+                time.sleep(delay)
+                continue
+            assert status == expected, f"{method} {path}: expected {expected}, got {status}: {raw[:400]}"
+            return result
+    finally:
+        with LATENCY_LOCK:
+            OPERATION_LATENCIES.append(time.monotonic() - operation_started)
 
 
 def concurrent(calls, workers=40):
@@ -143,16 +170,24 @@ def main():
         sys.exit("Do not run acceptance probes with python -O")
     scenario = sys.argv[1] if len(sys.argv) > 1 else "all"
     scenarios = {"wallet": wallet_race, "idempotency": idempotency, "contention": contention, "validation": validation}
-    if scenario == "all":
-        for run in scenarios.values():
-            run()
-    elif scenario in scenarios:
-        scenarios[scenario]()
-    else:
+    if scenario != "all" and scenario not in scenarios:
         sys.exit("Usage: burst.sh [all|wallet|idempotency|contention|validation]")
-    ordered = sorted(LATENCIES)
-    print(json.dumps({"result": "PASS", "requests": len(ordered), "run_id": RUN,
-                      "client_p99_ms": round(ordered[min(len(ordered)-1, int(len(ordered)*0.99))] * 1000, 2)}))
+    outcome = "FAIL"
+    print(f"Starting burst-{RUN}: max_retries={MAX_RETRIES} (0 means strict)", flush=True)
+    try:
+        for run in scenarios.values() if scenario == "all" else [scenarios[scenario]]:
+            run()
+        outcome = "PASS"
+    finally:
+        def p99(values):
+            ordered = sorted(values)
+            return round(ordered[min(len(ordered)-1, int(len(ordered)*0.99))] * 1000, 2) if ordered else None
+
+        print(json.dumps({"result": outcome, "requests": len(LATENCIES),
+                          "logical_requests": len(OPERATION_LATENCIES), "run_id": RUN,
+                          "max_retries": MAX_RETRIES, "http_status_counts": dict(HTTP_STATUSES),
+                          "client_p99_ms": p99(LATENCIES),
+                          "operation_p99_including_retries_ms": p99(OPERATION_LATENCIES)}), flush=True)
 
 
 if __name__ == "__main__":

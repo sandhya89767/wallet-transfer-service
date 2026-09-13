@@ -60,27 +60,28 @@ public class TransferRepository {
                 .optional();
     }
 
-    public void markSucceeded(UUID id) {
-        updateStatus(id, TransferStatus.SUCCEEDED, null);
+    public Transfer markSucceeded(UUID id) {
+        return updateStatus(id, TransferStatus.SUCCEEDED, null);
     }
 
-    public void markDeclined(UUID id, String reason) {
-        updateStatus(id, TransferStatus.DECLINED, reason);
+    public Transfer markDeclined(UUID id, String reason) {
+        return updateStatus(id, TransferStatus.DECLINED, reason);
     }
 
-    private void updateStatus(UUID id, TransferStatus status, String reason) {
-        int changed = jdbcClient.sql("""
+    private Transfer updateStatus(UUID id, TransferStatus status, String reason) {
+        return jdbcClient.sql("""
                         UPDATE transfers
                         SET status = :status, failure_reason = :reason, updated_at = NOW()
                         WHERE id = :id AND status = 'PENDING'
+                        RETURNING id, idempotency_key, from_wallet_id, to_wallet_id,
+                                  amount_paise, status, failure_reason, created_at, updated_at
                         """)
                 .param("id", id)
                 .param("status", status.name())
                 .param("reason", reason)
-                .update();
-        if (changed != 1) {
-            throw new IllegalStateException("Transfer status changed unexpectedly");
-        }
+                .query((resultSet, rowNumber) -> mapTransfer(resultSet))
+                .optional()
+                .orElseThrow(() -> new IllegalStateException("Transfer status changed unexpectedly"));
     }
 
     private String transferSelect() {

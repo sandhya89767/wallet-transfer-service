@@ -1,6 +1,6 @@
-# Local verification record
+# Verification record
 
-Verified on **2026-09-13 (Asia/Kolkata)** in this workspace. This is local evidence, **not** a public deployment result.
+Verified on **2026-09-13 (Asia/Kolkata)**. The initial sections describe local evidence; hosted observations are recorded separately below and do not claim a passing hosted acceptance run.
 
 ## Environment
 
@@ -48,9 +48,27 @@ Example actual correlated event (demo identifiers):
 
 Follow the README test, Compose and two-instance commands. Unit/Failsafe reports are generated under target and intentionally not committed; CI uploads them with logs and metrics. The scripts generate fresh users/keys for each run (or consume an operator-issued fresh token bundle). Money from seed creation is excluded from transfer conservation comparisons.
 
+## Hosted observations — 2026-09-13
+
+- Public API: https://wallet-service-43q9.onrender.com. Initially readiness/liveness returned 200 UP, metrics returned 200, and the unauthenticated root returned the expected 401.
+- The owner's strict run `535c2109-70ce-4084-b1f6-3ab6f784cb4b` passed the wallet race and identical-transfer retries, then failed during contention with application 503. Full hosted invariants were not verified.
+- A subsequent observed run `24b04994-01b1-43b9-b024-401895d9feb7` with `BURST_MAX_RETRIES=3` also **FAILED**. It passed wallet race/replay checks, but recorded 392 HTTP responses: 54×201, 178×200, 1×409, 65×503 and 94×502. Some queued work was cancelled after failure; this was not a complete 541-operation run. Per-attempt p99 was 12,787 ms; logical-operation p99 including retries was 30,473.89 ms.
+- Readiness and metrics returned HTTP 502 in the immediate recovery check. Render Events/Logs are needed to establish the cause; memory exhaustion, process restart, database connectivity and pool/lock timeouts are possibilities, not confirmed diagnoses. Further stress runs were stopped.
+- A later read-only check returned readiness 200 UP and metrics 200. Process uptime was about 517 seconds, indicating a newer process than the initial deployment. Current-process pool counters showed 0 active, 0 pending and 0 acquisition timeouts (maximum 10 connections); those counters do not explain failures in an earlier process. Public health recovered, but hosted acceptance still has not passed. Confirm the restart reason in Render Events.
+- Subsequent authenticated dashboard inspection confirmed the incident: Render Events reports **HTTP health check timed out after 5 seconds at 21:03 IST**, then recovery at 21:04. `DataSource health check failed` logs at 15:32:31Z and 15:33:01Z show connection acquisition timed out after 5000 ms: pool total=10, active=10, idle=0, waiting=14 and 8 respectively. This establishes readiness connection-pool starvation under load; a memory-limit failure was not shown by this event. The app is in Render Oregon and the Neon endpoint is in AWS Ohio (`us-east-2`); cross-region latency is a likely contributor, not a measured sole cause. Co-locating a replacement free app in Ohio requires a new Render service and another full test, not a weaker health check.
+- Runner regression: seven deterministic retry unit tests passed. An additional **local strict** 541-request run passed with no unexpected statuses, attempt p99 418.39 ms. This does not override the hosted failures.
+
+## Ohio remediation attempts — 2026-09-13
+
+- Created an owner-approved replacement at https://wallet-service-ohio.onrender.com on Render Free (Ohio, 0.1 CPU, 512 MiB), using the existing Neon database, unchanged readiness check, and constrained JVM. Existing services were left intact.
+- With pool 10 and unchanged application code, strict run `cd2f7156-0155-43a0-82ea-0d4ddf937be5` failed: 175 responses (54×201, 118×200, 1×409, 2×503). Readiness remained UP and public metrics confirmed two pool-acquisition timeouts. Co-location alone was insufficient.
+- Set only this replacement service's `DB_POOL_SIZE` to 20 and verified the effective setting using metrics. Strict run `505ace29-a96b-44bd-9e84-1d3d7413ec4b` also failed: 277 responses (54×201, 220×200, 1×409, 2×503), attempt p99 11,703.9 ms. Increasing the pool alone was insufficient.
+- Code remediation combines the two immutable-wallet identity lookups into one SELECT and obtains the finalized transfer with UPDATE RETURNING, including database-generated timestamps, removing two SQL round trips from a successful new transfer. Ownership is still checked before the key claim, wallet rows are still locked in UUID order with NO KEY UPDATE, and the guarded debit, separate credit and single transaction are unchanged. Retryable logs now include only a safe exception type, never exception messages containing credentials.
+- Post-change `./mvnw verify` passed all 19 Java unit/integration cases, including concurrent full-response equality and credit rollback; seven Python retry-runner unit tests passed. Hosted performance of this code change remains unverified until deployment and retest.
+
 ## Limitations
 
 - The [public GitHub repository](https://github.com/sandhya89767/wallet-transfer-service) is published. [Hosted CI passed](https://github.com/sandhya89767/wallet-transfer-service/actions/runs/34763347884) for implementation commit `a300e0e`.
-- Render/managed database provisioning, public logs/recording and deployed probes remain **pending**.
+- The public endpoint exists, but passing hosted acceptance, post-redeploy persistence verification and public logs/recording remain **pending**. Confirm service recovery before review.
 - No R3 reversal endpoint; no real funding/payment provider, managed identity, durable telemetry outbox, or production financial certification is claimed.
 - Extreme overload can produce bounded-timeout 503 responses; clients must retry with the same key.

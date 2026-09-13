@@ -9,7 +9,7 @@ The selected assignment is Wallet & P2P Transfer (exercise-bank pages 7–9), no
 | Deliverable | Status |
 |---|---|
 | Public GitHub repository | [sandhya89767/wallet-transfer-service](https://github.com/sandhya89767/wallet-transfer-service) — public, published |
-| Public deployed API URL | **Pending — deploy the image with managed PostgreSQL** |
+| Public deployed API URL | https://wallet-service-ohio.onrender.com — replacement deployed; hosted acceptance still pending after failed load tests (see verification record) |
 | Public logs or accessible burst/logs recording | **Pending — capture from the deployed service** |
 | Passing hosted CI run | [Passed on implementation commit a300e0e](https://github.com/sandhya89767/wallet-transfer-service/actions/runs/34763347884) |
 | Fresh reviewer bearer-token bundle | **Pending — issue for the deployed key and share privately** |
@@ -42,7 +42,7 @@ Do not substitute localhost, fabricated URLs, a private dashboard link, or the l
 
 Wallet & P2P Transfer — Spring Boot / PostgreSQL
 
-- API: **fill actual public URL**
+- API: https://wallet-service-ohio.onrender.com — confirm acceptance and disclose the hosted load-test failures before submitting
 - Repository: https://github.com/sandhya89767/wallet-transfer-service
 - Logs/recording: **fill accessible evidence URL**
 - Run probes: follow README with the privately supplied token bundle.

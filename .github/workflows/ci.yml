@@ -20,6 +20,8 @@ jobs:
           cache: maven
       - name: Unit and PostgreSQL concurrency tests
         run: ./mvnw --batch-mode verify
+      - name: HTTP runner retry unit tests
+        run: python3 -m unittest discover -s scripts -p 'test_*.py' -v
       - name: Build container
         run: docker compose up --build -d --wait --wait-timeout 180
       - name: Live HTTP acceptance bursts

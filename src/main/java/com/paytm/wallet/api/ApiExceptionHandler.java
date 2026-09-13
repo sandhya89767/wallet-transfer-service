@@ -44,7 +44,11 @@ public class ApiExceptionHandler {
     @ExceptionHandler({TransientDataAccessException.class, TransactionTimedOutException.class,
             CannotCreateTransactionException.class, org.springframework.jdbc.CannotGetJdbcConnectionException.class})
     public ResponseEntity<ApiError> handleUnavailable(Exception exception) {
-        log.atWarn().addKeyValue("event", "request.retryable_failure").log("Database operation unavailable");
+        // Exception messages/stack traces can contain credentials from malformed JDBC URLs.
+        // Log only the exception type for safe pool/transaction failure diagnosis.
+        log.atWarn().addKeyValue("event", "request.retryable_failure")
+            .addKeyValue("exception_type", exception.getClass().getSimpleName())
+            .log("Database operation unavailable");
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).header("Retry-After", "1")
                 .body(new ApiError("temporarily_unavailable", "Retry with the same idempotency key", Instant.now()));
     }

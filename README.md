@@ -89,6 +89,12 @@ BASE_URLS=http://localhost:8080,http://localhost:8081 ./scripts/burst.sh all
 
 Results and remaining submission obligations: [docs/VERIFICATION.md](docs/VERIFICATION.md), [docs/SUBMISSION.md](docs/SUBMISSION.md).
 
+### Hosted transient failures
+
+The burst runner remains **strict by default** (`BURST_MAX_RETRIES=0`): any unexpected 503 fails the run. For a separate resilience check, set `BURST_MAX_RETRIES=3` alongside the public `BASE_URL` and private credentials. This retries only correlated application `503 temporarily_unavailable` responses, at most three times, with the exact same request body/idempotency key, honoring the API's numeric `Retry-After` with backoff and jitter. It does not retry authentication errors, conflicts, other server errors, or transport failures, and does not lower concurrency or remove assertions.
+
+Every retry is printed without credentials. The final summary (also emitted on failure) includes HTTP status counts, per-attempt p99, and logical-operation p99 including retry delays. A retry-mode pass is **not** a strict zero-error or latency-SLA pass. Keep both results as evidence. Run deterministic runner tests with `python3 -m unittest discover -s scripts -p 'test_*.py'`.
+
 ## Observability
 
 - Health: `/actuator/health`; readiness `/actuator/health/readiness` includes PostgreSQL; liveness is independent of PostgreSQL.
@@ -116,7 +122,7 @@ wallet_transfers_idempotent_replays_total
 
 ## Deployment
 
-Use the [Render Blueprint](render.yaml) and [deployment runbook](docs/DEPLOYMENT.md) for a free Render container plus external managed PostgreSQL. No public deployment has been performed by this workspace. Configure:
+Use the [Render Blueprint](render.yaml) and [deployment runbook](docs/DEPLOYMENT.md) for a free Render container plus external managed PostgreSQL. The replacement public deployment is https://wallet-service-ohio.onrender.com (Free Ohio, pool 20); health checks passed, but hosted load tests failed and optimized-code acceptance remains pending. The original Oregon service is unchanged. See [the verification record](docs/VERIFICATION.md). Configure:
 
 | Variable | Value |
 |---|---|
@@ -130,6 +136,6 @@ Use the [Render Blueprint](render.yaml) and [deployment runbook](docs/DEPLOYMENT
 
 `DATABASE_URL` must be a **JDBC URL**, with user/password supplied separately. Use a direct PostgreSQL endpoint for Flyway and connection session settings, not a transaction-pooling proxy. Use TLS for public database connections. Keep database/password values and token bundles out of source control.
 
-Use `/actuator/health/readiness` as the platform health-check path. The image health check honors `PORT`. The Render blueprint generates a private signing key. The [public repository](https://github.com/sandhya89767/wallet-transfer-service) is published and [hosted CI passed](https://github.com/sandhya89767/wallet-transfer-service/actions/runs/34763347884) for implementation commit `a300e0e`. The deployed URL and logs/recording link remain owner-account tasks; see the submission checklist. R3 reversal is deliberately left for the requested live follow-up, not represented as an implemented R2 feature.
+Use `/actuator/health/readiness` as the platform health-check path. The image health check honors `PORT`. The Render blueprint generates a private signing key. The [public repository](https://github.com/sandhya89767/wallet-transfer-service) is published and [hosted CI passed](https://github.com/sandhya89767/wallet-transfer-service/actions/runs/34763347884) for implementation commit `a300e0e`. Hosted acceptance/recovery and the logs/recording link remain pending; see the submission checklist. R3 reversal is deliberately left for the requested live follow-up, not represented as an implemented R2 feature.
 
 See [docs/DESIGN.md](docs/DESIGN.md) for the one-page design and trade-off discussion.
