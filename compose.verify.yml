@@ -1,0 +1,27 @@
+# Optional verification-only second instance; shares the same database.
+services:
+  app-peer:
+    image: paytm-app:latest
+    environment:
+      DATABASE_URL: jdbc:postgresql://postgres:5432/wallet
+      DATABASE_USER: wallet
+      DATABASE_PASSWORD: wallet
+      WALLET_AUTH_SECRET: ${WALLET_AUTH_SECRET:-local-demo-only-change-before-deploy-0123456789}
+      WALLET_ALLOW_SEEDING: "true"
+      DB_POOL_SIZE: 20
+      PORT: 10000
+      JAVA_TOOL_OPTIONS: "-Xms64m -Xmx256m -XX:MaxMetaspaceSize=128m -XX:ReservedCodeCacheSize=64m -Xss512k"
+    mem_limit: 512m
+    cpus: 1
+    ports:
+      - "8081:10000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL

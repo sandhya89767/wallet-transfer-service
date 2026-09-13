@@ -1,0 +1,12 @@
+.git
+.github
+.idea
+.vscode
+target
+README.md
+docs
+scripts
+.env
+.env.*
+**/__pycache__
+**/*-tokens.json

@@ -1,0 +1,12 @@
+.DS_Store
+.idea/
+.vscode/
+target/
+*.iml
+*.log
+.env
+.env.*
+!.env.example
+__pycache__/
+*.pyc
+*-tokens.json

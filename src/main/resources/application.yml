@@ -1,0 +1,58 @@
+spring:
+  application:
+    name: wallet-service
+  main:
+    banner-mode: off
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/wallet}
+    username: ${DATABASE_USER:wallet}
+    password: ${DATABASE_PASSWORD:wallet}
+    hikari:
+      maximum-pool-size: ${DB_POOL_SIZE:20}
+      connection-timeout: 5000
+      connection-init-sql: "SET statement_timeout = '15000'; SET lock_timeout = '10000'"
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+    deserialization:
+      accept-float-as-int: false
+      fail-on-unknown-properties: true
+      fail-on-null-for-primitives: true
+    mapper:
+      allow-coercion-of-scalars: false
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+
+server:
+  port: ${PORT:8080}
+  shutdown: graceful
+
+wallet:
+  auth-secret: ${WALLET_AUTH_SECRET}
+  allow-seeding: ${WALLET_ALLOW_SEEDING:false}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      group:
+        readiness:
+          include: readinessState,db
+      show-details: never
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      slo:
+        http.server.requests: 25ms,50ms,100ms,250ms,500ms,1s,2s
+    tags:
+      application: ${spring.application.name}
+
+logging:
+  structured:
+    format:
+      console: logstash

@@ -1,0 +1,24 @@
+# Configure managed PostgreSQL in the Render dashboard; no credentials belong here.
+services:
+  - type: web
+    name: wallet-service
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /actuator/health/readiness
+    autoDeployTrigger: checksPass
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_USER
+        sync: false
+      - key: DATABASE_PASSWORD
+        sync: false
+      - key: WALLET_AUTH_SECRET
+        generateValue: true
+      - key: WALLET_ALLOW_SEEDING
+        value: "true"
+      - key: DB_POOL_SIZE
+        value: "10"
+      - key: JAVA_TOOL_OPTIONS
+        value: "-Xms64m -Xmx256m -XX:MaxMetaspaceSize=128m -XX:ReservedCodeCacheSize=64m -Xss512k"
