@@ -9,7 +9,8 @@ spring:
     password: ${DATABASE_PASSWORD:wallet}
     hikari:
       maximum-pool-size: ${DB_POOL_SIZE:20}
-      connection-timeout: 5000
+      # Bound queueing without increasing the number of contending DB sessions.
+      connection-timeout: ${DB_CONNECTION_TIMEOUT_MS:10000}
       connection-init-sql: "SET statement_timeout = '15000'; SET lock_timeout = '10000'"
   jackson:
     property-naming-strategy: SNAKE_CASE

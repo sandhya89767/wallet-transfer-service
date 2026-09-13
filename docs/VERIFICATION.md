@@ -82,6 +82,12 @@ Follow the README test, Compose and two-instance commands. Unit/Failsafe reports
 - Reproducible operator utility: [submission_check.py](../scripts/submission_check.py). Hidden signing-key entry, separate reviewer/recording identities, owner-only private files, and Git exclusion; no signing key is saved. Four utility regression tests pass alongside seven retry tests.
 - Five fresh reviewer-role tokens were generated and validated using read-only authenticated 404 probes, leaving the wallets uncreated for review. Expiry: **2026-09-14 16:36:51 UTC / 22:06:51 IST**. They have not yet been delivered; no tokens are included in this record.
 
+## Subsequent recording-run failure and queue-wait tuning
+
+- Strict hosted run `cb2ca08b-1dae-4873-971c-9e25814d388e` on 2026-09-13 at 17:03 UTC **FAILED** after 224 responses (54×201, 168×200, 1×409, 1×503), with no retries. Wallet race and identical-transfer checks passed; full contention/conservation checks did not complete. Client p99 was 9,387.95 ms.
+- The matching Render log at `17:03:37.750432154Z` records `request.retryable_failure` with `CannotCreateTransactionException`. The subsequent healthy-process metrics show pool maximum 20 and exactly one pool-acquisition timeout, with no active or pending connections at inspection. This supports connection-acquisition starvation under contention, not a proven memory failure or balance corruption.
+- The prior successful run does not establish reproducible hosted reliability. Proposed remediation keeps pool size, SQL locking, concurrency and strict zero-retry behavior unchanged; connection acquisition now waits up to 10 seconds (configurable with `DB_CONNECTION_TIMEOUT_MS`) rather than 5 seconds. This is bounded queue-wait tolerance, not improved throughput or a latency-SLA fix. Deployment and repeated strict validation are pending.
+
 ## Limitations
 
 - The [public GitHub repository](https://github.com/sandhya89767/wallet-transfer-service) is published. [Hosted CI passed](https://github.com/sandhya89767/wallet-transfer-service/actions/runs/34763347884) for implementation commit `a300e0e`.
